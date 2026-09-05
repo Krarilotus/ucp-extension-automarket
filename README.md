@@ -11,7 +11,7 @@ The extension works with the [Unofficial Crusader Patch 3 framework](https://git
 - Customisations: customisations can be added based on popular demand. 
 
 ## Multiplayer and saved games
-All players must use the same Automarket version. Version 1.0.1 fixes a settings-packet overflow and changes the packet format; do not mix it with 1.0.0.
+All players must use the same Automarket version. Version 1.1.0 fixes a settings-packet overflow and changes the packet format; do not mix it with 1.0.0.
 
 Each player's configured market fee is committed with **Save & Close**. Every peer uses that committed fee for that player's trades, and saves preserve it. Agree on matching fee settings if everyone should pay the same rate; fees are not overridden by the host.
 

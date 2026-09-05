@@ -6,7 +6,7 @@ This extension provides an automarket
 ![ui integration](https://raw.githubusercontent.com/gynt/ucp-extension-automarket/refs/heads/main/locale/ui-automarket-button.png)
 - Works in Multiplayer: everyone needs to have the automarket extension activated.
 
-Version 1.0.1 fixes a multiplayer settings-packet overflow and trading fee accounting.
+Version 1.1.0 fixes a multiplayer settings-packet overflow and trading fee accounting.
 All players must update together. Each player's fee is synchronized with **Save & Close**;
 use matching configured fees if everyone should pay the same rate.
 When loading a save from 1.0.0, each player must confirm their existing settings with
