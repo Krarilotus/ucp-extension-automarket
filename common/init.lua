@@ -27,10 +27,17 @@ typedef struct AutoMarketDataHeader {
 } AutoMarketDataHeader;
 
 // This info should be saved
+typedef struct AutoMarketDataV1 {
+  AutoMarketDataHeader header;
+  AutoMarketPlayerData playerSettings[9];
+  AutoMarketPlayerCredit playerCredit[9];
+} AutoMarketDataV1;
+
 typedef struct AutoMarketData {
   AutoMarketDataHeader header;
   AutoMarketPlayerData playerSettings[9];
   AutoMarketPlayerCredit playerCredit[9];
+  int marketFees[9]; // committed with each player's settings; -1 needs confirmation
 } AutoMarketData;
 
   ]])
@@ -39,7 +46,8 @@ typedef struct AutoMarketData {
   sizes["AutoMarketPlayerData"] = ffi.sizeof("AutoMarketPlayerData")
   -- 
   sizes["AutoMarketPlayerCredit"] = ffi.sizeof("AutoMarketPlayerCredit")
-  -- 3244
+  sizes["AutoMarketDataV1"] = ffi.sizeof("AutoMarketDataV1")
+  -- 2416
   sizes["AutoMarketData"] = ffi.sizeof("AutoMarketData")
 
   -- 4

@@ -1,7 +1,7 @@
 name: automarket
 display-name: "Auto market (BETA)"
 type: module
-version: 1.0.0
+version: 1.0.1
 author: gynt
 dependencies:
   framework: ">= 3.0.7"

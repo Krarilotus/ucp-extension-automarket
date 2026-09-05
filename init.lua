@@ -5,10 +5,16 @@ local ffi = modules.cffi:cffi()
 local automarket = {}
 
 local common = require("common")
+local feeConfig = require("common.fees")
+local savedata = require("common.savedata")
+local configuredFee = 0
 local addresses = require("common.addresses")
 common.loadHeaders()
 local autoMarketPlayerDataSize = common.sizes["AutoMarketPlayerData"]
-local autoMarketPlayerCreditSize = common.sizes["AutoMarketPlayerCredit"]
+-- Four bytes for the player ID, settings, then four bytes for the fee.
+-- protocol adds its own four-byte discriminator to this body.
+local commitParameterSize = 4 + autoMarketPlayerDataSize + 4
+assert(4 + commitParameterSize <= 1260, "Automarket settings exceed the lockstep payload limit")
 local autoMarketDataSize = common.sizes["AutoMarketData"]
 local autoMarketDataHeaderSize = common.sizes["AutoMarketDataHeader"]
 
@@ -32,6 +38,7 @@ local automarketProtocolHandler = {
     meta.parameters:serializeInteger(getControllingPlayerID())
     -- 0th element is the UI state
     meta.parameters:serializeBytes(core.readBytes(pAutomarketPlayerSettings + 0, autoMarketPlayerDataSize))
+    meta.parameters:serializeInteger(configuredFee)
   end,
   scheduleAfterReceive = function(self, meta)
     
@@ -40,13 +47,20 @@ local automarketProtocolHandler = {
     local playerID = meta.parameters:deserializeInteger()
     local realPlayer = getInvoker()
 
-    if playerID ~= realPlayer then
+    if realPlayer < 1 or realPlayer > 8 or playerID ~= realPlayer then
       log(WARNING, string.format("player %s may be cheating by trying to set the automarket of player %s", realPlayer, playerID))
+      return
     end
 
     local data = meta.parameters:deserializeBytes(autoMarketPlayerDataSize)
+    local fee = meta.parameters:deserializeInteger()
+    if not feeConfig.isValid(fee) then
+      log(WARNING, "ignoring automarket settings with an invalid market fee")
+      return
+    end
     log(VERBOSE, string.format("executing automarket protocol for comitting data for player: %s", realPlayer))
     core.writeBytes(pAutomarketPlayerSettings + (realPlayer * autoMarketPlayerDataSize), data)
+    automarketData.marketFees[realPlayer] = fee
 
     if realPlayer == getControllingPlayerID() then 
       -- If this data is for us, also update UI slot
@@ -83,10 +97,11 @@ local automarketInterface = {
 }
 
 function automarket:enable(config)
+  configuredFee = feeConfig.fromConfig(config)
 
   ---@type protocol
   local p = modules.protocol
-  automarketProtocolNumber, automarketProtocolKey = p:registerCustomProtocol('automarket', 'commitSingle', 'LOCKSTEP', 4 + autoMarketDataSize, automarketProtocolHandler)
+  automarketProtocolNumber, automarketProtocolKey = p:registerCustomProtocol('automarket', 'commitSingle', 'LOCKSTEP', commitParameterSize, automarketProtocolHandler)
 
   local automarketUI = automarketInterface
   automarketUI:initialize()
@@ -247,60 +262,15 @@ function automarket:enable(config)
 
     ---@param handle ReadHandle
     deserialize = function(self, handle)
-      local success = false
-      
-      if handle:exists(mapdatapath) == true then
-        local data = handle:get(mapdatapath)
-        log(VERBOSE, string.format("size of the data: %d", data:len()))
-        
-        if data:len() > autoMarketDataSize then
-          log(WARNING, string.format("Could not load automarket data, is it from a future version?"))
-          success = false
-        elseif data:len() < autoMarketDataSize then
-          log(WARNING, string.format("The loaded data may be compatible but a converter isnt implemented"))
-          if data:len() >= 4 then
-            log(WARNING, string.format("expected version %d but received version %s", automarketData.header.version, string.unpack("<i", data:sub(1, 4))))
-          end
-          success = false
-        else
-          local expectedVersion = automarketData.header.version
-          local receivedVersion = string.unpack("<i", data:sub(1, 4))
-          log(INFO, string.format("expected version %d and received version %s", automarketData.header.version, receivedVersion))
-
-          if expectedVersion == receivedVersion then
-            success = true
-          end
-        end
-
-        if success then
-          log(VERBOSE, string.format("writing automarket data from map file (length: %d) to %X", data:len(), pAutomarketData))
-          
-          -- This nonsense is here due to a bug in RPS (or UCP?) with core.writeString
-          local bytes = table.pack(string.byte(data, 1, -1))
-          -- local chunkSize = 32
-          -- for i=1,(data:len() - chunkSize), chunkSize do
-          --   local bs = table.pack(string.byte(data, i, i + chunkSize - 1))
-          --   for _, b in ipairs(bs) do
-          --     table.insert(bytes, b)
-          --   end
-          -- end
-
-          log(VERBOSE, string.format("bytes data size: %d", #bytes))
-          
-          local v = automarketData.header.version
-          core.writeBytes(pAutomarketData, bytes)
-          automarketData.header.version = v
-        end
-      else
-        
-        success = false
+      local bytes = {}
+      if handle:exists(mapdatapath) then
+        local contents = handle:get(mapdatapath)
+        for i = 1, #contents do bytes[i] = string.byte(contents, i) end
       end
-
-      if success  == false then
-        -- reset the info
-        log(VERBOSE, string.format("resetting automarket data to 0"))
-        ffi.fill(ffi.cast("void *", pAutomarketData + autoMarketDataHeaderSize), autoMarketDataSize - autoMarketDataHeaderSize, 0)
-      end
+      local restored = savedata.restore(automarketData, bytes, common,
+        function(data) core.writeBytes(pAutomarketData, data) end,
+        function(offset, size) core.setMemory(pAutomarketData + offset, 0, size) end)
+      if not restored then log(WARNING, "no compatible automarket save data; settings reset") end
 
     end
   }

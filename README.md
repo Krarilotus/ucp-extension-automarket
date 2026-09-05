@@ -8,8 +8,17 @@ The extension works with the [Unofficial Crusader Patch 3 framework](https://git
 - Works in Multiplayer: everyone needs to have the automarket extension activated.
 
 ## Upcoming features
-- Market fee: buys and sales are more expensive and have less profit according to a preset percentage as set in the UCP3 GUI.
 - Customisations: customisations can be added based on popular demand. 
+
+## Multiplayer and saved games
+All players must use the same Automarket version. Version 1.0.1 fixes a settings-packet overflow and changes the packet format; do not mix it with 1.0.0.
+
+Each player's configured market fee is committed with **Save & Close**. Every peer uses that committed fee for that player's trades, and saves preserve it. Agree on matching fee settings if everyone should pay the same rate; fees are not overridden by the host.
+
+When loading a 1.0.0 save, thresholds and fee credit are preserved. Each player must confirm their settings with **Save & Close** before automated trading resumes. See [CHANGELOG.md](CHANGELOG.md) for release notes.
+
+## Regression tests
+Install Python and `lupa` (`python -m pip install 'lupa>=2.2,<3'`), then run `python tests/run.py`. The tests run the actual Lua handlers with mocked game memory and native trade functions. They do not replace two-peer in-game verification.
 
 ## Known issues
 Currently there is a stability issue which makes the game exe crash when the load bar is full.

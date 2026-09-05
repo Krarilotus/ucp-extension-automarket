@@ -56,57 +56,15 @@ local function calculateFeedReward(rawReward, neutralFee100)
   return roundedReward, withheldDecimals100
 end
 
-local state = {
-  fee = 10,
-  overpay = 0,
-  withheld = 0,
-  gold = 1000,
-}
-
-function processBuy(cost)
-  local roundedCost, overpay = calculateFeedCost(cost, state.fee)
-  state.overpay = state.overpay + overpay
-  if state.overpay > 100 then
-    roundedCost = roundedCost - 1
-    state.overpay = state.overpay - 100
-  end
-
-  return roundedCost, state.overpay
-end
-
-function processSell(reward)
-  local roundedReward, withheld = calculateFeedReward(reward, state.fee)
-  state.withheld = state.withheld + withheld
-  if state.withheld > 100 then
-    roundedReward = roundedReward + 1
-    state.withheld = state.withheld - 100
-  end
-
-  return roundedReward, state.withheld
-end
-
-function tick()
-  print(string.format("state   start: fee=%d gold=%d withheld=%d overpay=%d", state.fee, state.gold, state.withheld, state.overpay))
-  local sales = math.random(1, 25)
-  
-  local reward = processSell(sales)
-  print(string.format("state selling: %d gain %d", sales, reward))
-
-  state.gold = state.gold + reward
-
-  print(string.format("state between: fee=%d gold=%d withheld=%d overpay=%d", state.fee, state.gold, state.withheld, state.overpay))
-
-  local buys = math.random(1, 25)
-  -- print(string.format("state  buying: %s", buys))
-  local cost = processBuy(buys)
-  print(string.format("state  buying: %d cost %d", buys, cost))
-
-  state.gold = state.gold - cost
-
-  print(string.format("state     end: fee=%d gold=%d withheld=%d overpay=%d", state.fee, state.gold, state.withheld, state.overpay))
+-- Preview settlement without modifying the saved balance. The caller commits
+-- remainingCredit only after the native trade succeeds.
+local function settleCredit(currentCredit, tradeCredit)
+  local total = currentCredit + tradeCredit
+  return math.floor(total / 100), total % 100
 end
 
 return {
-    calculateFeedCost = calculateFeedCost,
-    calculateFeedReward = calculateFeedReward,
+  calculateFeedCost = calculateFeedCost,
+  calculateFeedReward = calculateFeedReward,
+  settleCredit = settleCredit,
 }
