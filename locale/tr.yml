@@ -1,0 +1,13 @@
+ui.invert-scroll-wheel-to-control-the-buy-sell-sliders-in-the-automarket-ui: Automarket alış/satış kaydırıcıları
+  için fare tekerleğini ters çevir
+ui.when-inverted-scrolling-away-from-you-means-increasing-the-value: Ters çevrildiğinde tekerleği ileri döndürmek
+  değeri artırır.
+ui.automarket: Automarket
+ui.ui: Arayüz
+ui.market-fee-percentage: Pazar ücreti yüzdesi
+? ui.if-not-zero-buy-expenses-go-up-by-this-percentage-and-sale-income-goes-down-with-this-percentage-for-goods-traded-with-the-automarket
+: Değer sıfır değilse Automarket ile alınıp satılan malların alış maliyeti bu yüzde kadar artar, satış geliri ise
+  bu yüzde kadar azalır.
+ui.market-fee: Pazar ücreti
+tags.economy: Ekonomi
+tags.multiplayer: Çok oyunculu

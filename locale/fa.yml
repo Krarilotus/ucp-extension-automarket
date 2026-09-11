@@ -1,0 +1,13 @@
+ui.invert-scroll-wheel-to-control-the-buy-sell-sliders-in-the-automarket-ui: معکوس‌کردن چرخ ماوس برای لغزنده‌های
+  خریدوفروش Automarket
+ui.when-inverted-scrolling-away-from-you-means-increasing-the-value: پس از معکوس‌کردن، چرخاندن رو به جلو مقدار را
+  افزایش می‌دهد.
+ui.automarket: Automarket
+ui.ui: رابط کاربری
+ui.market-fee-percentage: درصد کارمزد بازار
+? ui.if-not-zero-buy-expenses-go-up-by-this-percentage-and-sale-income-goes-down-with-this-percentage-for-goods-traded-with-the-automarket
+: اگر صفر نباشد، هزینهٔ خرید کالاهای معامله‌شده با Automarket به همین درصد افزایش و درآمد فروش آن‌ها به همین درصد
+  کاهش می‌یابد.
+ui.market-fee: کارمزد بازار
+tags.economy: اقتصاد
+tags.multiplayer: چندنفره

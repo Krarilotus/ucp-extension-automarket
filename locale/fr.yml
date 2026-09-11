@@ -1,0 +1,13 @@
+ui.invert-scroll-wheel-to-control-the-buy-sell-sliders-in-the-automarket-ui: Inverser la molette pour les curseurs
+  d’achat et de vente d’Automarket
+ui.when-inverted-scrolling-away-from-you-means-increasing-the-value: Une fois inversée, faire rouler la molette
+  vers l’avant augmente la valeur.
+ui.automarket: Automarket
+ui.ui: Interface
+ui.market-fee-percentage: Frais de marché en pourcentage
+? ui.if-not-zero-buy-expenses-go-up-by-this-percentage-and-sale-income-goes-down-with-this-percentage-for-goods-traded-with-the-automarket
+: Avec une valeur supérieure à zéro, les achats coûtent ce pourcentage de plus et les ventes rapportent ce pourcentage
+  de moins pour les marchandises échangées par Automarket.
+ui.market-fee: Frais de marché
+tags.economy: Économie
+tags.multiplayer: Multijoueur

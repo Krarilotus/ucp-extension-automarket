@@ -1,0 +1,13 @@
+ui.invert-scroll-wheel-to-control-the-buy-sell-sliders-in-the-automarket-ui: Invertir la rueda del ratón para los
+  controles de compra y venta de Automarket
+ui.when-inverted-scrolling-away-from-you-means-increasing-the-value: Al invertirla, girar la rueda hacia delante
+  aumenta el valor.
+ui.automarket: Automarket
+ui.ui: Interfaz
+ui.market-fee-percentage: Comisión del mercado en porcentaje
+? ui.if-not-zero-buy-expenses-go-up-by-this-percentage-and-sale-income-goes-down-with-this-percentage-for-goods-traded-with-the-automarket
+: Si no es cero, las compras mediante Automarket cuestan ese porcentaje más y las ventas generan ese porcentaje
+  menos de ingresos.
+ui.market-fee: Comisión del mercado
+tags.economy: Economía
+tags.multiplayer: Multijugador

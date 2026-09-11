@@ -1,0 +1,13 @@
+ui.invert-scroll-wheel-to-control-the-buy-sell-sliders-in-the-automarket-ui: Mausrad für die Kauf-/Verkaufsregler
+  von Automarket umkehren
+ui.when-inverted-scrolling-away-from-you-means-increasing-the-value: Bei umgekehrter Richtung erhöht das Drehen
+  vom Benutzer weg den Wert.
+ui.automarket: Automarket
+ui.ui: Oberfläche
+ui.market-fee-percentage: Marktgebühr in Prozent
+? ui.if-not-zero-buy-expenses-go-up-by-this-percentage-and-sale-income-goes-down-with-this-percentage-for-goods-traded-with-the-automarket
+: Bei einem Wert über null steigen die Einkaufskosten und sinken die Verkaufserlöse für mit Automarket gehandelte
+  Waren um diesen Prozentsatz.
+ui.market-fee: Marktgebühr
+tags.economy: Wirtschaft
+tags.multiplayer: Mehrspieler
