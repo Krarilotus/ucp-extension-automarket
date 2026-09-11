@@ -1,0 +1,10 @@
+ui.invert-scroll-wheel-to-control-the-buy-sell-sliders-in-the-automarket-ui: 反转 Automarket 买卖滑块的鼠标滚轮方向
+ui.when-inverted-scrolling-away-from-you-means-increasing-the-value: 反转后，向前滚动滚轮会增大数值。
+ui.automarket: Automarket
+ui.ui: 界面
+ui.market-fee-percentage: 市场手续费百分比
+? ui.if-not-zero-buy-expenses-go-up-by-this-percentage-and-sale-income-goes-down-with-this-percentage-for-goods-traded-with-the-automarket
+: 若不为零，通过 Automarket 交易的商品，其购买支出增加该百分比，出售收入减少该百分比。
+ui.market-fee: 市场手续费
+tags.economy: 经济
+tags.multiplayer: 多人游戏

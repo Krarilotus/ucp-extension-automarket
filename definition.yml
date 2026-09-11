@@ -14,8 +14,3 @@ meta:
 tags:
 - economy
 - multiplayer
-capabilities:
-  files: false
-  code: true
-  configuration: false
-  options: true

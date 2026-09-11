@@ -1,0 +1,13 @@
+ui.invert-scroll-wheel-to-control-the-buy-sell-sliders-in-the-automarket-ui: Az egérgörgő irányának megfordítása
+  az Automarket vételi és eladási csúszkáinál
+ui.when-inverted-scrolling-away-from-you-means-increasing-the-value: Megfordított iránynál a görgő előreforgatása
+  növeli az értéket.
+ui.automarket: Automarket
+ui.ui: Felület
+ui.market-fee-percentage: Piaci díj százalékban
+? ui.if-not-zero-buy-expenses-go-up-by-this-percentage-and-sale-income-goes-down-with-this-percentage-for-goods-traded-with-the-automarket
+: Nullától eltérő értéknél az Automarket vásárlási költségei ennyi százalékkal nőnek, az eladási bevételek pedig
+  ennyi százalékkal csökkennek.
+ui.market-fee: Piaci díj
+tags.economy: Gazdaság
+tags.multiplayer: Többjátékos
