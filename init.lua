@@ -75,7 +75,8 @@ local automarketInterface = {
     ---@type Module_UI
     local ui = modules.ui
     self.automarket = ui:createMenuFromFile("ucp/modules/automarket/ui/automarket.lua", true, true)
-    if type(self.automarket) == "number" then error("automarket failed to load") end
+    if type(self.automarket) ~= "table" then error("menu failed to load", 0) end
+    if self.automarket.bindingError then error(self.automarket.bindingError, 0) end
     -- unnecessary cast?
     -- self.automarket.triggerItem.menuItemRenderFunction.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemRenderFunction.simple)
     -- self.automarket.triggerItem.menuItemActionHandler.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemActionHandler.simple)
@@ -98,6 +99,15 @@ local automarketInterface = {
 }
 
 function automarket:enable(config)
+  configuredFee = feeConfig.fromConfig(config)
+  local settings = type(config) == "table" and config.ui
+  local sliders = type(settings) == "table" and settings.buySellSliders
+  local wheel = type(sliders) == "table" and sliders.scrollWheel
+  local invert = type(wheel) == "table" and wheel.invert
+  if invert ~= nil and type(invert) ~= "boolean" then
+    log(ERROR, "Automarket scroll-wheel inversion must be a boolean")
+  end
+
   local automarketUI = automarketInterface
   local ready, reason = pcall(function()
     addresses = native.resolve(core)
@@ -110,14 +120,6 @@ function automarket:enable(config)
     return
   end
 
-  configuredFee = feeConfig.fromConfig(config)
-  local settings = type(config) == "table" and config.ui
-  local sliders = type(settings) == "table" and settings.buySellSliders
-  local wheel = type(sliders) == "table" and sliders.scrollWheel
-  local invert = type(wheel) == "table" and wheel.invert
-  if invert ~= nil and type(invert) ~= "boolean" then
-    log(ERROR, "Automarket scroll-wheel inversion must be a boolean")
-  end
   modules.ui:sendEvent("automarket/config/update", {fee = configuredFee, invertScrollWheel = invert == true})
 
   local visuals, displaySite, ownerOffset = pcall(native.resolveVisuals, core)

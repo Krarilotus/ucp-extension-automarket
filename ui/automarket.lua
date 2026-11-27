@@ -4,6 +4,11 @@
 -- debug.sethook(function() local info=debug.getinfo(2); log(VERBOSE, string.format("[%s] %s: line %s: %s", info.what, info.short_src, info.currentline, info.name)) end, "l")
 
 local core = remote.interface.core
+local ready, reason = pcall(function()
+  require("ucp/modules/automarket/common/addresses").getUI(core)
+end)
+if not ready then return {bindingError = tostring(reason)} end
+
 local market = require("ucp/modules/automarket/ui/market")
 local tradeable = require("ucp/modules/automarket/ui/market/tradeable")
 local trigger = require("ucp/modules/automarket/ui/trigger")
