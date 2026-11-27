@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1
+
+- Show and commit a zero fee when an enabled fee setting is invalid.
+- Require UCP 3.0.8 to verify native bindings before registering Automarket.
+
 ## 1.1.0
 
 This minor release changes the multiplayer settings packet and saved Automarket data format. The earlier 1.0.1 PR draft was renamed to 1.1.0 before release.

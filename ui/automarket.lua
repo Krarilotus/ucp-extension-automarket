@@ -4,62 +4,21 @@
 -- debug.sethook(function() local info=debug.getinfo(2); log(VERBOSE, string.format("[%s] %s: line %s: %s", info.what, info.short_src, info.currentline, info.name)) end, "l")
 
 local core = remote.interface.core
-local utils = remote.interface.utils
+local market = require("ucp/modules/automarket/ui/market")
+local tradeable = require("ucp/modules/automarket/ui/market/tradeable")
+local trigger = require("ucp/modules/automarket/ui/trigger")
 
 local SETTINGS = {
-  ui = {
-    buySellSliders = {
-      scrollWheel = {
-        invert = false,
-      }
-    }
-  },
-  logic = {
-    marketFee = {
-      enabled = false,
-      value = 0,
-    }
-  }
+  ui = {buySellSliders = {scrollWheel = {invert = false}}},
+  fee = 0,
 }
 
-remote.events.receive('automarket/config/update', function(key, obj)
-  log(DEBUG, string.format("received event: config/update"))
-  local effect = false
-  if obj then
-    if obj.ui then
-      if obj.ui.buySellSliders then
-        if obj.ui.buySellSliders.scrollWheel then
-          if obj.ui.buySellSliders.scrollWheel.invert ~= nil then
-            log(DEBUG, string.format("ui.buySellSliders.scrollWheel.invert: %s", obj.ui.buySellSliders.scrollWheel.invert))
-            SETTINGS.ui.buySellSliders.scrollWheel.invert = obj.ui.buySellSliders.scrollWheel.invert
-            effect = true
-          end
-        end
-      end
-    end
-    if obj.logic then
-      if obj.logic.marketFee then
-        if obj.logic.marketFee.enabled ~= nil then
-          log(DEBUG, string.format("logic.marketFee.enabled: %s", obj.logic.marketFee.enabled))
-          SETTINGS.logic.marketFee.enabled = obj.logic.marketFee.enabled
-          effect = true
-        end
-        if obj.logic.marketFee.sliderValue ~= nil then
-          log(DEBUG, string.format("logic.marketFee.value: %s", obj.logic.marketFee.sliderValue))
-          SETTINGS.logic.marketFee.value = obj.logic.marketFee.sliderValue
-          effect = true
-        end
-      end
-    end
-  end
-  if effect == false then 
-    log(WARNING, string.format("config/update had no effect: %s", json:encode(obj)))
-  end
+remote.events.receive('automarket/config/update', function(_, settings)
+  SETTINGS.ui.buySellSliders.scrollWheel.invert = settings.invertScrollWheel
+  SETTINGS.fee = settings.fee
 end)
 
-local market = require("ucp/modules/automarket/ui/market")
 local processMarket = require("ucp/modules/automarket/ui/market/process")
-local tradeable = require("ucp/modules/automarket/ui/market/tradeable")
 local tradeability = tradeable.tradeablility
 
 local common = require("ucp/modules/automarket/common")
@@ -1074,7 +1033,7 @@ local menuItems = {
       slider = pSliderActionHandler,
     },
     menuItemRenderFunction = {
-      slider = pSliderRenderFunction, -- ffi.cast("void (__cdecl *)(int, int, int, int, bool)", core.AOBScan("56 33 F6 39 ? ? ? ? ? 89 ? ? ? ? ? 7E 2B"))
+      slider = pSliderRenderFunction,
     },
   },
   {
@@ -1133,7 +1092,7 @@ local menuItems = {
       slider = pSliderActionHandler,
     },
     menuItemRenderFunction = {
-      slider = pSliderRenderFunction, -- ffi.cast("void (__cdecl *)(int, int, int, int, bool)", core.AOBScan("56 33 F6 39 ? ? ? ? ? 89 ? ? ? ? ? 7E 2B"))
+      slider = pSliderRenderFunction,
     },
   },
   {
@@ -1192,7 +1151,7 @@ local menuItems = {
       slider = pSliderActionHandler,
     },
     menuItemRenderFunction = {
-      slider = pSliderRenderFunction, -- ffi.cast("void (__cdecl *)(int, int, int, int, bool)", core.AOBScan("56 33 F6 39 ? ? ? ? ? 89 ? ? ? ? ? 7E 2B"))
+      slider = pSliderRenderFunction,
     },
   },
 
@@ -1221,20 +1180,10 @@ ModalMenu:createModalMenu({
     
     game.Rendering.renderTextToScreenConst(textManager, "Save & Close", x + width - 150, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
 
-    local status, err = pcall(function()
-      local feeTxt = string.format("Market fee:   %d", 0) .. " %"
-      if SETTINGS.logic.marketFee.enabled == true then
-        feeTxt = string.format("Market fee:   %d", SETTINGS.logic.marketFee.value) .. " %"
-      end
-      local fee = SETTINGS.logic.marketFee.enabled and SETTINGS.logic.marketFee.value or 0
-      if automarketData.marketFees[market.pPlayerID[0]] ~= fee then
-        feeTxt = string.format("Fee after saving: %d", fee) .. " %"
-      end
-      
-      game.Rendering.renderTextToScreenConst(textManager, feeTxt, x + 30 + 5, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
-    end)
-    if status == false then log(ERROR, err) end
-    
+    local fee = SETTINGS.fee
+    local label = automarketData.marketFees[market.pPlayerID[0]] == fee and "Market fee:   %d %%" or "Fee after saving: %d %%"
+    game.Rendering.renderTextToScreenConst(textManager, string.format(label, fee),
+      x + 35, y + height - 37, 0, 0xB8EEFB, 0x13, 0, 0)
   end,
   menu = menu,
 })
@@ -1246,13 +1195,13 @@ end)
 
 local pCallback = registerObject(ffi.cast("void (__cdecl *)()", callback))
 
-local trigger = require("ucp/modules/automarket/ui/trigger")
-
 trigger.setAutomarketDataPointer(automarketDataArray)
 trigger.setControllingPlayerPoint(market.pPlayerID)
 
 return {
   pAutoMarketData = pAutoMarketData,
+  stockpile = trigger.stockpile,
+  pPlayerID = tonumber(ffi.cast("unsigned long", market.pPlayerID)),
   pCallback = tonumber(ffi.cast("unsigned long", pCallback)),
   triggerItem = trigger.triggerItem,
   renderAndHandleInOne = trigger.renderAndHandleInOne,

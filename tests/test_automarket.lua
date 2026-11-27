@@ -1,4 +1,5 @@
 ffi = require('ffi')
+ffi.tonumber = tonumber
 log = function() end
 local function equal(actual, expected, label)
   assert(actual == expected, (label or '') .. ': expected ' .. tostring(expected) .. ', got ' .. tostring(actual))
@@ -10,20 +11,35 @@ preload('common', 'common/init.lua')
 preload('common.fees', 'common/fees.lua')
 preload('common.savedata', 'common/savedata.lua')
 preload('ucp/modules/automarket/ui/market/fees', 'ui/market/fees.lua')
-package.preload['common.addresses'] = function() return {pPlayerID=1,pProtocolInvokerPlayerID=2} end
+package.preload['common.addresses'] = function()
+  return {
+    resolve=function() return {pProtocolInvokerPlayerID=2,pWeekChanged=3,marketTick=4} end,
+    resolveVisuals=function() return 5,6 end,
+  }
+end
 local registered
 modules = {
   cffi = {cffi=function() return ffi end},
   protocol = {registerCustomProtocol=function(_, extension, name, kind, size, handler)
     registered={size=size,handler=handler}; return 131, name
   end},
-  ui = {createMenuFromFile=function() error('STOP_BEFORE_NATIVE_UI') end},
+  ui = {
+    createMenuFromFile=function() return {pPlayerID=1,stockpile=7,pCallback=8,pAutoMarketData=10000} end,
+    registerEventHandler=function() end,
+    sendEvent=function(_,_,settings) menuSettings=settings end,
+  },
+  ['map-extensions'] = {registerSection=function() end},
 }
+hooks = {registerHookCallback=function() end}
 local controlling, invoker = 1, 1
-core = {readInteger=function(a) return a == 1 and controlling or invoker end}
+core = {
+  readInteger=function(a) return a == 1 and controlling or invoker end,
+  AssemblyLambda=function() end,
+  insertCode=function() end,
+}
 local extension = dofile('init.lua')
-local ok, err = pcall(extension.enable, extension, {logic={marketFee={enabled=true,sliderValue=5}}})
-assert(not ok and err:find('STOP_BEFORE_NATIVE_UI'))
+extension:enable({logic={marketFee={enabled=true,sliderValue=5}}})
+equal(menuSettings.fee,5,'menu fee')
 local common = require('common')
 equal(common.sizes.AutoMarketPlayerData,260,'player layout')
 equal(common.sizes.AutoMarketDataV1,2380,'legacy save layout')
@@ -175,4 +191,15 @@ for _,bytes in ipairs({{}, {2,0,0,0}, {3,0,0,0}}) do
   loaded,valid=restore(bytes);assert(not valid)
   equal(loaded.playerSettings[1].enabled,false,'invalid saves reset settings')
 end
+local function checkFallback(config)
+  extension:enable(config)
+  payload = {}
+  registered.handler.schedule(nil, {parameters=params})
+  equal(menuSettings.fee,0,'invalid fee shown as zero')
+  equal(payload[#payload-3],menuSettings.fee,'displayed fallback matches the packet')
+end
+for _, invalid in ipairs({101, 20.5, "bad", true}) do
+  checkFallback({logic={marketFee={enabled=true,sliderValue=invalid}}})
+end
+checkFallback({logic={marketFee=true}})
 print('PASS: packet size, sender/fee validation, trade accounting, peer determinism, and save migration')

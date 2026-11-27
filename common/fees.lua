@@ -3,8 +3,27 @@ local function isValid(value)
 end
 
 local function fromConfig(config)
-  local fee = config and config.logic and config.logic.marketFee
-  if not fee or not fee.enabled then return 0 end
+  if config ~= nil and type(config) ~= "table" then
+    log(ERROR, "Automarket settings must be a table; the market fee is off")
+    return 0
+  end
+  local logic = config and config.logic
+  if logic == nil then return 0 end
+  if type(logic) ~= "table" then
+    log(ERROR, "Automarket logic settings must be a table; the market fee is off")
+    return 0
+  end
+  local fee = logic.marketFee
+  if fee == nil then return 0 end
+  if type(fee) ~= "table" then
+    log(ERROR, "Automarket market fee settings must be a table; the fee is off")
+    return 0
+  end
+  if fee.enabled ~= nil and type(fee.enabled) ~= "boolean" then
+    log(ERROR, "Automarket market fee enabled setting must be a boolean; the fee is off")
+    return 0
+  end
+  if not fee.enabled then return 0 end
   if type(fee.sliderValue) ~= "number" then
     log(ERROR, "Automarket market fee must be a number; the fee is off")
     return 0

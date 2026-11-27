@@ -8,7 +8,8 @@ local common = require("common")
 local feeConfig = require("common.fees")
 local savedata = require("common.savedata")
 local configuredFee = 0
-local addresses = require("common.addresses")
+local native = require("common.addresses")
+local addresses
 common.loadHeaders()
 local autoMarketPlayerDataSize = common.sizes["AutoMarketPlayerData"]
 -- Four bytes for the player ID, settings, then four bytes for the fee.
@@ -97,17 +98,35 @@ local automarketInterface = {
 }
 
 function automarket:enable(config)
+  local automarketUI = automarketInterface
+  local ready, reason = pcall(function()
+    addresses = native.resolve(core)
+    automarketUI:initialize()
+    addresses.pPlayerID = assert(automarketUI.automarket.pPlayerID, "controlling player binding unavailable")
+    addresses.stockpile = assert(automarketUI.automarket.stockpile, "stockpile menu binding unavailable")
+  end)
+  if not ready then
+    log(ERROR, "Automarket is off: " .. tostring(reason))
+    return
+  end
+
   configuredFee = feeConfig.fromConfig(config)
+  local settings = type(config) == "table" and config.ui
+  local sliders = type(settings) == "table" and settings.buySellSliders
+  local wheel = type(sliders) == "table" and sliders.scrollWheel
+  local invert = type(wheel) == "table" and wheel.invert
+  if invert ~= nil and type(invert) ~= "boolean" then
+    log(ERROR, "Automarket scroll-wheel inversion must be a boolean")
+  end
+  modules.ui:sendEvent("automarket/config/update", {fee = configuredFee, invertScrollWheel = invert == true})
+
+  local visuals, displaySite, ownerOffset = pcall(native.resolveVisuals, core)
+  if not visuals then log(ERROR, "Automarket marketplace indicator is off: " .. tostring(displaySite)) end
 
   ---@type protocol
   local p = modules.protocol
   automarketProtocolNumber, automarketProtocolKey = p:registerCustomProtocol('automarket', 'commitSingle', 'LOCKSTEP', commitParameterSize, automarketProtocolHandler)
 
-  local automarketUI = automarketInterface
-  automarketUI:initialize()
-  ---@type Module_UI
-  local ui = modules.ui
-  ui:sendEvent("automarket/config/update", config)
   automarketUI:setCallbacks({
     setPointer = function(pointer)
       self.automarketData = ffi.cast("AutoMarketData *", pointer)
@@ -140,15 +159,14 @@ function automarket:enable(config)
         pWeekChanged = addresses.pWeekChanged,
         callback = pointer,
       })
-      -- 0045b4c0
-      local detourTarget = core.AOBScan("BF 01 00 00 00 8D B1 ? ? ? ? BD D0 07 00 00")
+      local detourTarget = addresses.marketTick
       log(VERBOSE, string.format("allocateMarketProcess: inserting code at 0x%X pointing to 0x%X", detourTarget, pointer))
       core.insertCode(detourTarget, 5, {asm}, nil, "after")
 
     end,
   })
 
-  hooks.registerHookCallback('afterInit', function()
+  local function installMenuHooks()
     log(VERBOSE, "setting trigger item")
     local menu = modules.ui:access().api.ui.Menu:fromID(0x10)
     -- log(VERBOSE, "loading ui access")
@@ -195,7 +213,7 @@ function automarket:enable(config)
 
 
     -- TODO: write the trigger item callback logic
-    local hookLocationStockpile, hookSizeStockpile = core.AOBScan("51 8B ? ? ? ? ? A1 ? ? ? ? 53 55 56 57 33 FF 57 57 6A 10 57 8D 91 00 02 00 00"), 7
+    local hookLocationStockpile, hookSizeStockpile = addresses.stockpile, 7
     core.insertCode(hookLocationStockpile, hookSizeStockpile, {
       core.AssemblyLambda([[
         call f
@@ -204,7 +222,7 @@ function automarket:enable(config)
       })
     }, nil, "after")
 
-    local hookLocationArmory, hookSizeArmory = core.AOBScan("51 8B ? ? ? ? ? A1 ? ? ? ? 53 55 56 57 33 FF 57 57 6A 10 57 57"), 7
+    local hookLocationArmory, hookSizeArmory = addresses.armory, 7
     core.insertCode(hookLocationArmory, hookSizeArmory, {
       core.AssemblyLambda([[
         call f
@@ -213,6 +231,7 @@ function automarket:enable(config)
       })
     }, nil, "after")
 
+    if not visuals then return end
     local rawPEnabledArray = core.allocate(4 * 9, true)
     local pEnabledArray = ffi.cast("bool **", rawPEnabledArray)
     local s = pAutomarketData + common.sizes["AutoMarketDataHeader"]
@@ -222,9 +241,7 @@ function automarket:enable(config)
     end
 
     --- improved visuals of the marketplace
-    local p = core.AOBScan("83 ? ? ? ? ? ? 66 ? ? ? ? ? ? BF 01 00 00 00")
-    local _, ownerOffset = utils.AOBExtract("0F ? ? I(? ? ? ?) 8B 5C 24 34 8B ? ? ? ? ? ?")
-    core.insertCode(p, 7, {
+    core.insertCode(displaySite, 7, {
       core.AssemblyLambda([[
         mov ECX, ESI
         add ECX, ownerOffset
@@ -236,6 +253,10 @@ function automarket:enable(config)
         ownerOffset = ownerOffset,
       })
     }, nil, "before")
+  end
+  hooks.registerHookCallback('afterInit', function()
+    local ok, err = pcall(installMenuHooks)
+    if not ok then log(ERROR, "Automarket menu integration failed: " .. tostring(err)) end
   end)
 
   local mapdatapath = "automarketplayerdata.bin"

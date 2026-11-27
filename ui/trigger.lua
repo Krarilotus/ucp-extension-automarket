@@ -1,7 +1,6 @@
-local core = remote.interface.core
-local utils = remote.interface.utils
+local addresses = require("ucp/modules/automarket/common/addresses").getUI(remote.interface.core)
 
-local trigger = {}
+local trigger = {stockpile = addresses.stockpile}
 
 local pAutomarketData
 function trigger.setAutomarketDataPointer(automarketDataPointer)
@@ -76,7 +75,7 @@ local item2 =  {
 registerObject(item2)
 trigger.triggerItem = item
 
-local _, pMenuHandlerStateXY = utils.AOBExtract("A1 I(? ? ? ?) 53 55 56 57 33 FF 57 57 6A 10 57 8D 91 00 02 00 00")
+local pMenuHandlerStateXY = addresses.pMenuHandlerStateXY
 ffi.cdef([[
   struct AM_Temp_Position {
     int x;
@@ -84,7 +83,7 @@ ffi.cdef([[
   };
 ]])
 local menuHandlerStateXY = ffi.cast("struct AM_Temp_Position *", pMenuHandlerStateXY)
-local _, pLeftClickStart = utils.AOBExtract("83 ? I(? ? ? ?) ? 0F ? ? ? ? ? 8B ? ? ? ? ? 8B ? ? ? ? ? 8D 44 0A FF")
+local pLeftClickStart = addresses.pLeftClickStart
 pLeftClickStart = ffi.cast("int *", pLeftClickStart)
 
 local stockpileRenderActionHandlerCombined = ffi.cast("void (__cdecl *)(void)", function()
